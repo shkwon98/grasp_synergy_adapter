@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
-# SPDX-License-Identifier: Apache-2.0
-
 name: Jazzy CI
 
 on:

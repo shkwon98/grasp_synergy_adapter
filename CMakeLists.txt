@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
-#
-# SPDX-License-Identifier: Apache-2.0
-
 cmake_minimum_required(VERSION 3.15)
 project(grasp_synergy_adapter)
 
