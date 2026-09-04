@@ -1,0 +1,141 @@
+# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
+# SPDX-FileContributor: Sunghyun Kwon <shkwon098@gmail.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# CMake formatting rules.
+
+format:
+  line_width: 80
+  tab_size: 2
+  use_tabchars: false
+  line_ending: unix
+
+  command_case: canonical
+  keyword_case: upper
+
+  separate_ctrl_name_with_space: false
+  separate_fn_name_with_space: false
+  dangle_parens: false
+
+  max_subgroups_hwrap: 2
+  max_pargs_hwrap: 3
+  max_lines_hwrap: 0
+
+  enable_sort: false
+  autosort: false
+
+markup:
+  enable_markup: true
+
+parse:
+  additional_commands:
+    FetchContent_Declare:
+      spelling: FetchContent_Declare
+      pargs: 1
+      flags:
+        - EXCLUDE_FROM_ALL
+        - SYSTEM
+        - OVERRIDE_FIND_PACKAGE
+      kwargs:
+        DOWNLOAD_COMMAND: "*"
+        URL: "+"
+        URL_HASH: 1
+        URL_MD5: 1
+        DOWNLOAD_NAME: 1
+        DOWNLOAD_NO_EXTRACT: 1
+        DOWNLOAD_NO_PROGRESS: 1
+        TIMEOUT: 1
+        HTTP_USERNAME: 1
+        HTTP_PASSWORD: 1
+        HTTP_HEADER: "+"
+        TLS_VERIFY: 1
+        TLS_CAINFO: 1
+        NETRC: 1
+        NETRC_FILE: 1
+        GIT_REPOSITORY: 1
+        GIT_TAG: 1
+        GIT_REMOTE_NAME: 1
+        GIT_SUBMODULES: "+"
+        GIT_SHALLOW: 1
+        GIT_PROGRESS: 1
+        GIT_CONFIG: "+"
+        SVN_REPOSITORY: 1
+        SVN_REVISION: 1
+        SVN_USERNAME: 1
+        SVN_PASSWORD: 1
+        SVN_TRUST_CERT: 1
+        HG_REPOSITORY: 1
+        HG_TAG: 1
+        CVS_REPOSITORY: 1
+        CVS_MODULE: 1
+        CVS_TAG: 1
+        UPDATE_COMMAND: "*"
+        UPDATE_DISCONNECTED: 1
+        PATCH_COMMAND: "*"
+        SOURCE_SUBDIR: 1
+        FIND_PACKAGE_ARGS: "*"
+
+    FetchContent_MakeAvailable:
+      spelling: FetchContent_MakeAvailable
+      pargs: "+"
+
+    FetchContent_Populate:
+      spelling: FetchContent_Populate
+      pargs: 1
+      flags:
+        - QUIET
+      kwargs:
+        SUBBUILD_DIR: 1
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
+        DOWNLOAD_COMMAND: "*"
+        URL: "+"
+        URL_HASH: 1
+        URL_MD5: 1
+        DOWNLOAD_NAME: 1
+        DOWNLOAD_NO_EXTRACT: 1
+        DOWNLOAD_NO_PROGRESS: 1
+        TIMEOUT: 1
+        HTTP_USERNAME: 1
+        HTTP_PASSWORD: 1
+        HTTP_HEADER: "+"
+        TLS_VERIFY: 1
+        TLS_CAINFO: 1
+        NETRC: 1
+        NETRC_FILE: 1
+        GIT_REPOSITORY: 1
+        GIT_TAG: 1
+        GIT_REMOTE_NAME: 1
+        GIT_SUBMODULES: "+"
+        GIT_SHALLOW: 1
+        GIT_PROGRESS: 1
+        GIT_CONFIG: "+"
+        SVN_REPOSITORY: 1
+        SVN_REVISION: 1
+        SVN_USERNAME: 1
+        SVN_PASSWORD: 1
+        SVN_TRUST_CERT: 1
+        HG_REPOSITORY: 1
+        HG_TAG: 1
+        CVS_REPOSITORY: 1
+        CVS_MODULE: 1
+        CVS_TAG: 1
+        UPDATE_COMMAND: "*"
+        UPDATE_DISCONNECTED: 1
+        PATCH_COMMAND: "*"
+
+    FetchContent_GetProperties:
+      spelling: FetchContent_GetProperties
+      pargs: 1
+      kwargs:
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
+        POPULATED: 1
+
+    FetchContent_SetPopulated:
+      spelling: FetchContent_SetPopulated
+      pargs: 1
+      kwargs:
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
