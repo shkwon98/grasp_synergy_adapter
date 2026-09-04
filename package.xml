@@ -7,8 +7,10 @@
   <version>0.1.0</version>
   <description>Map low-dimensional grasp synergies to configurable multi-joint hand trajectories.</description>
   <maintainer email="shkwon098@gmail.com">Sunghyun Kwon</maintainer>
-  <license>Apache-2.0</license>
+  <license file="LICENSE">Apache-2.0</license>
   <author email="shkwon098@gmail.com">Sunghyun Kwon</author>
+  <url type="repository">https://github.com/shkwon98/grasp_synergy_adapter</url>
+  <url type="bugtracker">https://github.com/shkwon98/grasp_synergy_adapter/issues</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
