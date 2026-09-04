@@ -138,7 +138,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
             rclpy.spin_once(node, timeout_sec=0.05)
 
         command = JointTrajectory()
-        command.joint_names = ["trigger"]
+        command.joint_names = ["synergy"]
         point = JointTrajectoryPoint()
         point.positions = [1.0]
         point.time_from_start.sec = 10
@@ -250,7 +250,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
     assert len(target_goals) == 3
     assert len(feedback_messages) == 1
     feedback = feedback_messages[0].feedback
-    assert feedback.joint_names == ["trigger"]
+    assert feedback.joint_names == ["synergy"]
     assert list(feedback.desired.positions) == pytest.approx([0.5])
     assert list(feedback.actual.positions) == pytest.approx([0.2])
     assert list(feedback.error.positions) == pytest.approx([0.3])

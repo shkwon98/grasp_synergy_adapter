@@ -82,7 +82,7 @@ TEST(TrajectoryAdapterTest, InsertsEveryCrossedKnotInBothDirections)
     EXPECT_EQ(reverse.trajectory->points[2].time_from_start.sec, 8);
 }
 
-TEST(TrajectoryAdapterTest, RejectsInvalidVirtualTrajectories)
+TEST(TrajectoryAdapterTest, RejectsInvalidSynergyTrajectories)
 {
     const GraspModel model{kGrasps};
     trajectory_msgs::msg::JointTrajectory input;

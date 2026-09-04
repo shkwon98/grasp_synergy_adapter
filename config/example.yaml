@@ -12,15 +12,15 @@
 /**/grasp_synergy_adapter:
   ros__parameters:
     # ── Hand interface ───────────────────────────────────────────────
-    #   virtual_joint     [string, required]        Joint name accepted from clients.
-    #   output_joints     [list[string], required]  Physical-controller joint order.
+    #   synergy_joint     [string, required]        Joint name accepted from clients.
+    #   joints            [list[string], required]  Physical-controller joint order.
     #   state_timeout_sec [double, s, > 0]          Maximum controller-state age.
     #
     # • Joint names must be nonempty and unique. Every positions list below must
-    #   match output_joints order and length.
+    #   match joints order and length.
     # • Commands are rejected until a complete, fresh controller state is available.
-    virtual_joint: trigger
-    output_joints: [finger_a_joint, finger_b_joint]
+    synergy_joint: synergy
+    joints: [finger_a_joint, finger_b_joint]
     state_timeout_sec: 0.5
 
     # ── Grasp profiles ───────────────────────────────────────────────
@@ -28,9 +28,11 @@
     # To add a grasp, append its name here and copy the nested pinch block below.
     grasp_names: [pinch]
 
-    #   grasps.<grasp>.knot_names                    Ordered knot names.
-    #   grasps.<grasp>.knots.<knot>.coordinate      [double, normalized]
-    #   grasps.<grasp>.knots.<knot>.positions       [list[double], joint position]
+    # Each entry below grasps has:
+    #   knot_names  Ordered knot names.
+    #   knots       Named knot definitions, each containing:
+    #     coordinate  [double, normalized]
+    #     positions   [list[double], joint position]
     #
     #   • Provide at least two knots in knot_names order.
     #   • Coordinates must be finite and strictly increase from 0.0 to 1.0.
@@ -41,14 +43,14 @@
     # are included in the output, starting from the current projected hand state.
     grasps:
       pinch:
-        knot_names: [open, half, closed]
+        knot_names: [pre_grasp, intermediate, grasp]
         knots:
-          open:
+          pre_grasp:
             coordinate: 0.0
             positions: [0.0, 0.0]
-          half:
+          intermediate:
             coordinate: 0.5
             positions: [0.8, 0.4]
-          closed:
+          grasp:
             coordinate: 1.0
             positions: [1.0, 1.0]

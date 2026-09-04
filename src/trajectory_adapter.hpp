@@ -44,8 +44,8 @@ inline builtin_interfaces::msg::Duration DurationFromNanoseconds(std::int64_t na
 }
 
 inline TrajectoryExpansion ExpandTrajectory(const GraspModel &model, const std::string &grasp,
-                                            std::string_view virtual_joint,
-                                            const std::vector<std::string> &output_joints,
+                                            std::string_view synergy_joint,
+                                            const std::vector<std::string> &joints,
                                             const trajectory_msgs::msg::JointTrajectory &input,
                                             double start_coordinate)
 {
@@ -54,23 +54,23 @@ inline TrajectoryExpansion ExpandTrajectory(const GraspModel &model, const std::
     {
         return {std::nullopt, "unknown grasp"};
     }
-    if (output_joints.size() != model.JointCount())
+    if (joints.size() != model.JointCount())
     {
-        return {std::nullopt, "output_joints size does not match the grasp profile"};
+        return {std::nullopt, "joints size does not match the grasp profile"};
     }
     if (!std::isfinite(start_coordinate) || start_coordinate < 0.0 || start_coordinate > 1.0)
     {
         return {std::nullopt, "current grasp coordinate is invalid"};
     }
-    if (input.joint_names.size() != 1 || input.joint_names.front() != virtual_joint ||
+    if (input.joint_names.size() != 1 || input.joint_names.front() != synergy_joint ||
         input.points.empty())
     {
-        return {std::nullopt, "expected one non-empty virtual-joint trajectory"};
+        return {std::nullopt, "expected one non-empty synergy-joint trajectory"};
     }
 
     trajectory_msgs::msg::JointTrajectory output;
     output.header = input.header;
-    output.joint_names = output_joints;
+    output.joint_names = joints;
     double previous_coordinate = start_coordinate;
     std::int64_t previous_time = 0;
     for (const auto &input_point : input.points)

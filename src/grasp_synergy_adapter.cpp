@@ -41,15 +41,15 @@ public:
 
     GraspSynergyAdapterNode()
         : Node("grasp_synergy_adapter"),
-          virtual_joint_(RequiredString("virtual_joint")),
-          output_joints_(RequiredStringArray("output_joints")),
+          synergy_joint_(RequiredString("synergy_joint")),
+          joints_(RequiredStringArray("joints")),
           state_timeout_sec_(RequiredPositiveDouble("state_timeout_sec")),
           model_(LoadGrasps())
     {
         ValidateJoints();
-        if (model_.JointCount() != output_joints_.size())
+        if (model_.JointCount() != joints_.size())
         {
-            throw std::invalid_argument("output_joints size does not match configured knot poses");
+            throw std::invalid_argument("joints size does not match configured knot poses");
         }
 
         trajectory_publisher_ = create_publisher<trajectory_msgs::msg::JointTrajectory>(
@@ -70,7 +70,7 @@ public:
         }
 
         RCLCPP_INFO(get_logger(), "Ready with %zu grasp trajectory endpoints on joint '%s'",
-                    endpoints_.size(), virtual_joint_.c_str());
+                    endpoints_.size(), synergy_joint_.c_str());
     }
 
 private:
@@ -155,12 +155,12 @@ private:
     void ValidateJoints() const
     {
         std::unordered_set<std::string> names;
-        names.insert(virtual_joint_);
-        for (const auto &joint : output_joints_)
+        names.insert(synergy_joint_);
+        for (const auto &joint : joints_)
         {
             if (joint.empty() || !names.insert(joint).second)
             {
-                throw std::invalid_argument("virtual_joint and output_joints must be unique");
+                throw std::invalid_argument("synergy_joint and joints must be unique");
             }
         }
     }
@@ -193,8 +193,8 @@ private:
             return std::nullopt;
         }
         JointPositions ordered;
-        ordered.reserve(output_joints_.size());
-        for (const auto &joint : output_joints_)
+        ordered.reserve(joints_.size());
+        for (const auto &joint : joints_)
         {
             const auto found = std::ranges::find(names, joint);
             if (found == names.end())
@@ -237,7 +237,7 @@ private:
         const std::string &grasp, const trajectory_msgs::msg::JointTrajectory &trajectory) const
     {
         const auto coordinate = CurrentCoordinate(grasp);
-        return coordinate ? ExpandTrajectory(model_, grasp, virtual_joint_, output_joints_,
+        return coordinate ? ExpandTrajectory(model_, grasp, synergy_joint_, joints_,
                                              trajectory, *coordinate)
                           : TrajectoryExpansion{std::nullopt,
                                                 "target/controller_state is missing or stale"};
@@ -438,7 +438,7 @@ private:
         }
         auto output = std::make_shared<TrajectoryAction::Feedback>();
         output->header = feedback.header;
-        output->joint_names = {virtual_joint_};
+        output->joint_names = {synergy_joint_};
         output->desired.time_from_start = feedback.desired.time_from_start;
         output->actual.time_from_start = feedback.actual.time_from_start;
         output->error.time_from_start = feedback.error.time_from_start;
@@ -495,8 +495,8 @@ private:
         command_active_.store(false);
     }
 
-    const std::string virtual_joint_;
-    const std::vector<std::string> output_joints_;
+    const std::string synergy_joint_;
+    const std::vector<std::string> joints_;
     const double state_timeout_sec_;
     const GraspModel model_;
     rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
