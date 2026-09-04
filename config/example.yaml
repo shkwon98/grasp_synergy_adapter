@@ -1,0 +1,57 @@
+# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
+# SPDX-License-Identifier: Apache-2.0
+
+# Grasp synergy adapter example.
+#
+# Each grasp becomes a normalized one-joint JTC-compatible interface. The adapter
+# expands its commands and forwards them to one physical JointTrajectoryController.
+# For "pinch", clients use:
+#   <node_namespace>/pinch_controller/joint_trajectory
+#   <node_namespace>/pinch_controller/follow_joint_trajectory
+# Remap these downstream interfaces at launch:
+#   target/joint_trajectory
+#   target/follow_joint_trajectory
+#   target/controller_state
+/**/grasp_synergy_adapter:
+  ros__parameters:
+    # ── Hand interface ───────────────────────────────────────────────
+    #   virtual_joint     [string, required]        Joint name accepted from clients.
+    #   output_joints     [list[string], required]  Physical-controller joint order.
+    #   state_timeout_sec [double, s, > 0]          Maximum controller-state age.
+    #
+    # • Joint names must be nonempty and unique. Every positions list below must
+    #   match output_joints order and length.
+    # • Commands are rejected until a complete, fresh controller state is available.
+    virtual_joint: trigger
+    output_joints: [finger_a_joint, finger_b_joint]
+    state_timeout_sec: 0.5
+
+    # ── Grasp profiles ───────────────────────────────────────────────
+    # Each name creates one <grasp>_controller topic and action endpoint.
+    # To add a grasp, append its name here and copy the nested pinch block below.
+    grasp_names: [pinch]
+
+    #   grasps.<grasp>.knot_names                    Ordered knot names.
+    #   grasps.<grasp>.knots.<knot>.coordinate      [double, normalized]
+    #   grasps.<grasp>.knots.<knot>.positions       [list[double], joint position]
+    #
+    #   • Provide at least two knots in knot_names order.
+    #   • Coordinates must be finite and strictly increase from 0.0 to 1.0.
+    #   • Positions must be finite. Use rad for revolute and m for prismatic joints.
+    #   • Adjacent knots must not have identical positions.
+    #
+    # Positions are linearly interpolated between knots. Crossed intermediate knots
+    # are included in the output, starting from the current projected hand state.
+    grasps:
+      pinch:
+        knot_names: [open, half, closed]
+        knots:
+          open:
+            coordinate: 0.0
+            positions: [0.0, 0.0]
+          half:
+            coordinate: 0.5
+            positions: [0.8, 0.4]
+          closed:
+            coordinate: 1.0
+            positions: [1.0, 1.0]

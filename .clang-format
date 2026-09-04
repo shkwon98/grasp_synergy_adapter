@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
+# SPDX-FileContributor: Sunghyun Kwon <shkwon098@gmail.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# C++ formatting rules.
+
+---
+Language: Cpp
+BasedOnStyle: Google
+Standard: c++20
+
+ColumnLimit: 100
+IndentWidth: 4
+AccessModifierOffset: -4
+
+BreakBeforeBraces: Allman
+PackConstructorInitializers: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+IndentCaseLabels: false
+
+DerivePointerAlignment: false
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 1
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  # C and C++ standard libraries
+  - Regex: '^<[A-Za-z0-9_]+>$'
+    Priority: 1
+  - Regex: '^<(assert|complex|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|stdalign|stdarg|stdatomic|stdbool|stddef|stdint|stdio|stdlib|string|tgmath|threads|time|uchar|wchar|wctype)\.h>$'
+    Priority: 2
+
+  # POSIX and operating-system headers
+  - Regex: '^<(arpa|linux|mach|net|netinet|sys|CFNetwork|CoreFoundation|Security)/.*>$'
+    Priority: 2
+  - Regex: '^<(TargetConditionals|afunix|dlfcn|execinfo|fcntl|fnmatch|glob|grp|ifaddrs|io|langinfo|libgen|netdb|poll|pthread|pwd|resolv|sched|semaphore|spawn|strings|syslog|termios|unistd|wincrypt|winsock2|wordexp|ws2tcpip)\.h>$'
+    Priority: 2
+
+  # ROS 2 generated interfaces and package families
+  - Regex: '^<[^/]+/(msg|srv|action)/'
+    Priority: 3
+  - Regex: '^<(ament|nav2|rcl|rcpputils|rmw|rosbag2|rosidl|rviz|tf2)[^/]*/'
+    Priority: 3
+  - Regex: '^<(class_loader|controller_interface|controller_manager|diagnostic_updater|hardware_interface|pluginlib|realtime_tools|urdf)/'
+    Priority: 3
+
+  # Third-party libraries
+  - Regex: '^<.*>$'
+    Priority: 4
+
+  # Project headers
+  - Regex: '^".*"$'
+    Priority: 5

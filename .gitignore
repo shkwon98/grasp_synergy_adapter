@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
+# SPDX-License-Identifier: Apache-2.0
+
+/build/
+/install/
+/log/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
