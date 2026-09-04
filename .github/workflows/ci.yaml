@@ -1,15 +1,33 @@
 name: Jazzy CI
 
 on:
-  push:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-latest
+    name: Build and test (${{ matrix.architecture }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            runner: ubuntu-24.04
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
     container:
       image: rostooling/setup-ros-docker:ubuntu-noble-latest
     steps:
@@ -18,4 +36,5 @@ jobs:
         with:
           package-name: grasp_synergy_adapter
           target-ros2-distro: jazzy
+          no-symlink-install: true
           coverage-result: false
