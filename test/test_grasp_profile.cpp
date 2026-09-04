@@ -34,6 +34,20 @@ TEST(GraspModelTest, InterpolatesAndProjectsPiecewisePathsForAnyJointCount)
     EXPECT_DOUBLE_EQ(*model.Project("wrap", JointPositions{0.9, 0.7}), 0.7);
 }
 
+TEST(GraspModelTest, KeepsConfiguredGraspProfilesIndependent)
+{
+    auto grasps = kGrasps;
+    grasps.emplace("pinch", GraspProfile{{
+                                GraspKnot{0.0, {0.1, 0.2}},
+                                GraspKnot{1.0, {0.5, 0.8}},
+                            }});
+    const GraspModel model{std::move(grasps)};
+
+    EXPECT_EQ(model.Interpolate("wrap", 1.0), (JointPositions{1.0, 1.0}));
+    EXPECT_EQ(model.Interpolate("pinch", 1.0), (JointPositions{0.5, 0.8}));
+    EXPECT_FALSE(model.Interpolate("missing", 0.5));
+}
+
 TEST(GraspModelTest, RejectsInvalidProfilesAndEndpointNames)
 {
     EXPECT_THROW(static_cast<void>(GraspModel{GraspMap{}}), std::invalid_argument);

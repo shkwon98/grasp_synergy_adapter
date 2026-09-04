@@ -3,7 +3,7 @@ name: Jazzy CI
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -38,3 +38,18 @@ jobs:
           target-ros2-distro: jazzy
           no-symlink-install: true
           coverage-result: false
+
+  documentation:
+    name: Build documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install rosdoc2
+        run: |
+          apt-get update
+          apt-get install -y python3-rosdoc2
+      - name: Build documentation
+        run: rosdoc2 build --package-path .

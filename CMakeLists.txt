@@ -20,11 +20,18 @@ ament_target_dependencies(
 
 install(TARGETS grasp_synergy_adapter DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
-install(FILES README.md CHANGELOG.rst LICENSE DESTINATION share/${PROJECT_NAME})
+install(
+  FILES README.md CHANGELOG.rst CONTRIBUTING.md SECURITY.md LICENSE
+  DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
+
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_pytest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
+
+  ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(test_grasp_profile test/test_grasp_profile.cpp)
   target_compile_features(test_grasp_profile PRIVATE cxx_std_20)

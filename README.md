@@ -36,6 +36,20 @@ Run one adapter node per physical hand or downstream controller.
 
 ROS 2 Jazzy on Ubuntu 24.04 is the current supported target.
 
+## Versioning and compatibility
+
+This package follows [Semantic Versioning](https://semver.org/). Releases in the
+`0.x` series are pre-stable: incompatible changes to the public contract use a
+minor version bump and include migration notes, while patch releases preserve
+the public contract.
+
+The public contract consists of the executable name, documented ROS interfaces
+and QoS, parameters, grasp-profile YAML schema, and documented command behavior.
+Headers under `src/` are implementation details and are not installed as a
+public C++ API. See
+[CHANGELOG.rst](CHANGELOG.rst)
+for release changes.
+
 ## Installation
 
 ### Binary package
@@ -129,8 +143,9 @@ valid ROS name tokens.
 
 ## Configure a grasp
 
-The [example profile](config/example.yaml) documents the complete schema. A
-minimal three-knot grasp looks like this:
+The
+[example profile](config/example.yaml)
+documents the complete schema. A minimal three-knot grasp looks like this:
 
 ```yaml
 /**/grasp_synergy_adapter:
@@ -259,10 +274,19 @@ colcon test-result \
 
 ## Contributing
 
-Bug reports and focused pull requests are welcome. Use the
+Bug reports and focused pull requests are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md)
+for the development and review process. Use the
 [GitHub issue tracker](https://github.com/shkwon98/grasp_synergy_adapter/issues)
 for reproducible problems and proposed changes.
 
+Report suspected security vulnerabilities according to
+[SECURITY.md](SECURITY.md),
+not through a public issue.
+
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Copyright 2026 Sunghyun Kwon.
+
+Apache License 2.0. See
+[LICENSE](LICENSE).

@@ -6,9 +6,9 @@
   <description>Map low-dimensional grasp synergies to configurable multi-joint hand trajectories.</description>
   <maintainer email="shkwon098@gmail.com">Sunghyun Kwon</maintainer>
   <license file="LICENSE">Apache-2.0</license>
-  <author email="shkwon098@gmail.com">Sunghyun Kwon</author>
   <url type="repository">https://github.com/shkwon98/grasp_synergy_adapter</url>
   <url type="bugtracker">https://github.com/shkwon98/grasp_synergy_adapter/issues</url>
+  <author email="shkwon098@gmail.com">Sunghyun Kwon</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -19,6 +19,11 @@
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ament_cmake_clang_format</test_depend>
+  <test_depend>ament_cmake_flake8</test_depend>
+  <test_depend>ament_cmake_lint_cmake</test_depend>
+  <test_depend>ament_cmake_xmllint</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>action_msgs</test_depend>
   <test_depend>rclpy</test_depend>

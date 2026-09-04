@@ -237,8 +237,8 @@ private:
         const std::string &grasp, const trajectory_msgs::msg::JointTrajectory &trajectory) const
     {
         const auto coordinate = CurrentCoordinate(grasp);
-        return coordinate ? ExpandTrajectory(model_, grasp, synergy_joint_, joints_,
-                                             trajectory, *coordinate)
+        return coordinate ? ExpandTrajectory(model_, grasp, synergy_joint_, joints_, trajectory,
+                                             *coordinate)
                           : TrajectoryExpansion{std::nullopt,
                                                 "target/controller_state is missing or stale"};
     }
