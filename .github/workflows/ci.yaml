@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 Sunghyun Kwon
+# SPDX-License-Identifier: Apache-2.0
+
+name: Jazzy CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+    steps:
+      - name: Build and test
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: grasp_synergy_adapter
+          target-ros2-distro: jazzy
+          coverage-result: false

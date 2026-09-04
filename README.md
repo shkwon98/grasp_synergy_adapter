@@ -1,5 +1,7 @@
 # Grasp synergy adapter
 
+[![Jazzy CI](https://github.com/shkwon98/grasp_synergy_adapter/actions/workflows/ci.yaml/badge.svg)](https://github.com/shkwon98/grasp_synergy_adapter/actions/workflows/ci.yaml)
+
 `grasp_synergy_adapter` maps a normalized one-joint grasp command to a configured
 multi-joint hand trajectory. Each grasp profile appears as a standard
 `JointTrajectoryController`-compatible topic and action interface.
@@ -38,11 +40,22 @@ target/controller_state
 Remap all three names to the physical controller. Run one adapter node per
 physical hand or downstream controller.
 
-## Build
+## Installation
 
-The package is tested on ROS 2 Jazzy. Place it in a ROS 2 workspace, then run:
+ROS 2 Jazzy on Ubuntu 24.04 is the current supported platform.
+
+Once the package is available from the ROS package repository, install it with:
 
 ```bash
+sudo apt update
+sudo apt install ros-jazzy-grasp-synergy-adapter
+```
+
+Until then, or to use the latest source, clone it into a ROS 2 workspace:
+
+```bash
+mkdir -p ~/ros2_ws/src
+git clone https://github.com/shkwon98/grasp_synergy_adapter.git ~/ros2_ws/src/grasp_synergy_adapter
 cd ~/ros2_ws
 source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths src --ignore-src -r -y
