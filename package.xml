@@ -12,21 +12,21 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>control_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
+  <depend>control_msgs</depend>
   <depend>trajectory_msgs</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>action_msgs</test_depend>
+  <test_depend>ament_index_python</test_depend>
+  <test_depend>rclpy</test_depend>
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_flake8</test_depend>
   <test_depend>ament_cmake_lint_cmake</test_depend>
   <test_depend>ament_cmake_xmllint</test_depend>
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_index_python</test_depend>
-  <test_depend>action_msgs</test_depend>
-  <test_depend>rclpy</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
