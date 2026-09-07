@@ -5,7 +5,6 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
-#include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -36,7 +35,6 @@ public:
     using TrajectoryAction = control_msgs::action::FollowJointTrajectory;
     using TrajectoryGoalHandle = rclcpp_action::ServerGoalHandle<TrajectoryAction>;
     using ControllerGoalHandle = rclcpp_action::ClientGoalHandle<TrajectoryAction>;
-    using ControllerResult = ControllerGoalHandle::WrappedResult;
     using ControllerState = control_msgs::msg::JointTrajectoryControllerState;
 
     GraspSynergyAdapterNode()
@@ -74,12 +72,6 @@ public:
     }
 
 private:
-    class UncertainTargetState final : public std::runtime_error
-    {
-    public:
-        using std::runtime_error::runtime_error;
-    };
-
     struct GraspEndpoint
     {
         rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr subscription;
@@ -350,76 +342,6 @@ private:
         }
     }
 
-    std::optional<ControllerResult> RunControllerGoal(
-        const TrajectoryAction::Goal &goal, const std::stop_token &stop_token,
-        const std::function<void(const TrajectoryAction::Feedback &)> &on_feedback)
-    {
-        using namespace std::chrono_literals;
-        if (!controller_client_->wait_for_action_server(2s))
-        {
-            throw std::runtime_error("target trajectory controller is not available");
-        }
-
-        rclcpp_action::Client<TrajectoryAction>::SendGoalOptions options;
-        options.feedback_callback =
-            [on_feedback](const ControllerGoalHandle::SharedPtr,
-                          const std::shared_ptr<const TrajectoryAction::Feedback> feedback)
-        { on_feedback(*feedback); };
-        auto handle_future = controller_client_->async_send_goal(goal, options);
-        while (handle_future.wait_for(20ms) != std::future_status::ready)
-        {
-            if (!rclcpp::ok() || stop_token.stop_requested())
-            {
-                return std::nullopt;
-            }
-        }
-        const auto controller_goal_handle = handle_future.get();
-        if (!controller_goal_handle)
-        {
-            throw std::runtime_error("target controller rejected the goal");
-        }
-
-        auto result_future = controller_client_->async_get_result(controller_goal_handle);
-        const auto started = std::chrono::steady_clock::now();
-        double timeout_seconds =
-            rclcpp::Duration(goal.trajectory.points.back().time_from_start).seconds() +
-            std::max(0.0, rclcpp::Duration(goal.goal_time_tolerance).seconds()) + 5.0;
-        if (goal.trajectory.header.stamp.sec != 0 || goal.trajectory.header.stamp.nanosec != 0)
-        {
-            timeout_seconds += std::max(
-                0.0, (rclcpp::Time(goal.trajectory.header.stamp) - get_clock()->now()).seconds());
-        }
-        const auto timeout = std::chrono::duration<double>(timeout_seconds);
-        std::optional<std::chrono::steady_clock::time_point> cancellation_started;
-        bool timed_out = false;
-        while (result_future.wait_for(20ms) != std::future_status::ready)
-        {
-            if (!rclcpp::ok())
-            {
-                return std::nullopt;
-            }
-            const auto now = std::chrono::steady_clock::now();
-            timed_out = timed_out || now - started > timeout;
-            if (!cancellation_started &&
-                (cancel_requested_.load() || stop_token.stop_requested() || timed_out))
-            {
-                static_cast<void>(controller_client_->async_cancel_goal(controller_goal_handle));
-                cancellation_started = now;
-            }
-            if (cancellation_started && now - *cancellation_started > 2s)
-            {
-                throw UncertainTargetState(
-                    "target controller did not confirm a terminal state after cancellation");
-            }
-        }
-        auto result = result_future.get();
-        if (timed_out)
-        {
-            throw std::runtime_error("target controller result timed out");
-        }
-        return result;
-    }
-
     std::optional<double> ProjectFeedback(const std::string &grasp,
                                           const std::vector<std::string> &joint_names,
                                           const std::vector<double> &positions) const
@@ -463,6 +385,8 @@ private:
     void Execute(const std::string &grasp, const std::shared_ptr<TrajectoryGoalHandle> &goal_handle,
                  const std::stop_token &stop_token)
     {
+        using namespace std::chrono_literals;
+        bool target_uncertain = false;
         try
         {
             TrajectoryAction::Goal target_goal = *goal_handle->get_goal();
@@ -472,27 +396,93 @@ private:
                 throw std::runtime_error(trajectory.error);
             }
             target_goal.trajectory = *trajectory.trajectory;
-            const auto result = RunControllerGoal(
-                target_goal, stop_token,
-                [this, grasp, goal_handle](const TrajectoryAction::Feedback &feedback)
-                { PublishFeedback(grasp, goal_handle, feedback); });
-            if (result)
+            if (!controller_client_->wait_for_action_server(2s))
             {
-                Finish(goal_handle, result->code, result->result);
+                throw std::runtime_error("target trajectory controller is not available");
             }
-        }
-        catch (const UncertainTargetState &error)
-        {
-            RCLCPP_ERROR(get_logger(), "%s; command ownership remains latched", error.what());
-            Finish(goal_handle, rclcpp_action::ResultCode::ABORTED, ErrorResult(error.what()));
-            return;
+
+            rclcpp_action::Client<TrajectoryAction>::SendGoalOptions options;
+            options.feedback_callback =
+                [this, grasp, goal_handle](
+                    const ControllerGoalHandle::SharedPtr,
+                    const std::shared_ptr<const TrajectoryAction::Feedback> feedback)
+            { PublishFeedback(grasp, goal_handle, *feedback); };
+            auto handle_future = controller_client_->async_send_goal(target_goal, options);
+            while (handle_future.wait_for(20ms) != std::future_status::ready)
+            {
+                if (!rclcpp::ok() || stop_token.stop_requested())
+                {
+                    command_active_.store(false);
+                    return;
+                }
+            }
+            const auto controller_goal_handle = handle_future.get();
+            if (!controller_goal_handle)
+            {
+                throw std::runtime_error("target controller rejected the goal");
+            }
+
+            auto result_future = controller_client_->async_get_result(controller_goal_handle);
+            const auto started = std::chrono::steady_clock::now();
+            double timeout_seconds =
+                rclcpp::Duration(target_goal.trajectory.points.back().time_from_start).seconds() +
+                std::max(0.0, rclcpp::Duration(target_goal.goal_time_tolerance).seconds()) + 5.0;
+            if (target_goal.trajectory.header.stamp.sec != 0 ||
+                target_goal.trajectory.header.stamp.nanosec != 0)
+            {
+                timeout_seconds += std::max(
+                    0.0, (rclcpp::Time(target_goal.trajectory.header.stamp) - get_clock()->now())
+                             .seconds());
+            }
+            const auto timeout = std::chrono::duration<double>(timeout_seconds);
+            std::optional<std::chrono::steady_clock::time_point> cancellation_started;
+            bool timed_out = false;
+            while (result_future.wait_for(20ms) != std::future_status::ready)
+            {
+                if (!rclcpp::ok())
+                {
+                    command_active_.store(false);
+                    return;
+                }
+                const auto now = std::chrono::steady_clock::now();
+                timed_out = timed_out || now - started > timeout;
+                if (!cancellation_started &&
+                    (cancel_requested_.load() || stop_token.stop_requested() || timed_out))
+                {
+                    static_cast<void>(
+                        controller_client_->async_cancel_goal(controller_goal_handle));
+                    cancellation_started = now;
+                }
+                if (cancellation_started && now - *cancellation_started > 2s)
+                {
+                    target_uncertain = true;
+                    throw std::runtime_error(
+                        "target controller did not confirm a terminal state after cancellation");
+                }
+            }
+            const auto result = result_future.get();
+            if (timed_out)
+            {
+                throw std::runtime_error("target controller result timed out");
+            }
+            Finish(goal_handle, result.code, result.result);
         }
         catch (const std::exception &error)
         {
-            RCLCPP_ERROR(get_logger(), "Grasp trajectory failed: %s", error.what());
+            if (target_uncertain)
+            {
+                RCLCPP_ERROR(get_logger(), "%s; command ownership remains latched", error.what());
+            }
+            else
+            {
+                RCLCPP_ERROR(get_logger(), "Grasp trajectory failed: %s", error.what());
+            }
             Finish(goal_handle, rclcpp_action::ResultCode::ABORTED, ErrorResult(error.what()));
         }
-        command_active_.store(false);
+        if (!target_uncertain)
+        {
+            command_active_.store(false);
+        }
     }
 
     const std::string synergy_joint_;
