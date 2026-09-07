@@ -26,6 +26,12 @@ def _spin_for(node, seconds):
         rclpy.spin_once(node, timeout_sec=0.02)
 
 
+def _result(node, future, timeout_sec=2.0):
+    rclpy.spin_until_future_complete(node, future, timeout_sec=timeout_sec)
+    assert future.done(), 'ROS request timed out'
+    return future.result()
+
+
 def test_missing_required_parameters_exit_with_error():
     executable = (
         Path(get_package_prefix('grasp_synergy_adapter'))
@@ -43,6 +49,7 @@ def test_missing_required_parameters_exit_with_error():
 
 
 def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
+    # ponytail: share one ROS process; split if scenarios need independent execution.
     suffix = str(os.getpid())
     namespace = f'/grasp_adapter_test_{suffix}'
     target = f'/grasp_adapter_target_{suffix}'
@@ -100,52 +107,44 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
     )
     target_goals = []
     feedback_messages = []
-    reject_next_target_goal = threading.Event()
-    second_goal_started = threading.Event()
-    third_goal_started = threading.Event()
+    target_behavior = 'succeed'
+    target_started = threading.Event()
+    release_target = threading.Event()
 
     def execute_target(goal_handle):
+        behavior = target_behavior
         target_goals.append(goal_handle.request)
         result = FollowJointTrajectory.Result()
         result.error_code = FollowJointTrajectory.Result.SUCCESSFUL
-        if len(target_goals) == 1:
+        if behavior == 'succeed':
             feedback = FollowJointTrajectory.Feedback()
             feedback.joint_names = ['finger_b_joint', 'finger_a_joint']
             feedback.desired.positions = [0.4, 0.8]
             feedback.actual.positions = [0.16, 0.32]
             goal_handle.publish_feedback(feedback)
             goal_handle.succeed()
-        elif len(target_goals) == 2:
-            second_goal_started.set()
+        else:
+            target_started.set()
             deadline = time.monotonic() + 3.0
             while not goal_handle.is_cancel_requested and time.monotonic() < deadline:
                 time.sleep(0.01)
+            if behavior == 'unconfirmed_cancel':
+                release_target.wait(timeout=5.0)
             if goal_handle.is_cancel_requested:
                 goal_handle.canceled()
             else:
                 goal_handle.abort()
-        else:
-            third_goal_started.set()
-            time.sleep(4.0)
-            goal_handle.canceled()
         return result
-
-    def accept_target_cancel(_goal_handle):
-        return CancelResponse.ACCEPT
-
-    def accept_target_goal(_goal_request):
-        if reject_next_target_goal.is_set():
-            reject_next_target_goal.clear()
-            return GoalResponse.REJECT
-        return GoalResponse.ACCEPT
 
     target_server = ActionServer(
         target_node,
         FollowJointTrajectory,
         f'{target}/follow_joint_trajectory',
         execute_target,
-        goal_callback=accept_target_goal,
-        cancel_callback=accept_target_cancel,
+        goal_callback=lambda _: (
+            GoalResponse.REJECT if target_behavior == 'reject' else GoalResponse.ACCEPT
+        ),
+        cancel_callback=lambda _: CancelResponse.ACCEPT,
         callback_group=ReentrantCallbackGroup(),
     )
     target_executor = MultiThreadedExecutor(num_threads=2)
@@ -205,34 +204,28 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
             assert time.monotonic() < deadline
             rclpy.spin_once(node, timeout_sec=0.05)
 
-        state.header.stamp = node.get_clock().now().to_msg()
-        state_publisher.publish(state)
         action_goal = FollowJointTrajectory.Goal()
         action_goal.trajectory = command
-        goal_future = action_client.send_goal_async(
-            action_goal, feedback_callback=feedback_messages.append
-        )
-        rclpy.spin_until_future_complete(node, goal_future, timeout_sec=2.0)
-        goal_handle = goal_future.result()
-        assert goal_handle is not None and goal_handle.accepted
-        result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(node, result_future, timeout_sec=5.0)
-        action_result = result_future.result()
-        assert action_result is not None
+
+        def send_goal(behavior):
+            nonlocal target_behavior
+            target_behavior = behavior
+            target_started.clear()
+            state.header.stamp = node.get_clock().now().to_msg()
+            state_publisher.publish(state)
+            return _result(node, action_client.send_goal_async(
+                action_goal, feedback_callback=feedback_messages.append
+            ))
+
+        goal_handle = send_goal('succeed')
+        assert goal_handle.accepted
+        action_result = _result(node, goal_handle.get_result_async(), timeout_sec=5.0)
         assert action_result.status == GoalStatus.STATUS_SUCCEEDED
         assert action_result.result.error_code == FollowJointTrajectory.Result.SUCCESSFUL
 
-        state.header.stamp = node.get_clock().now().to_msg()
-        state_publisher.publish(state)
-        reject_next_target_goal.set()
-        goal_future = action_client.send_goal_async(action_goal)
-        rclpy.spin_until_future_complete(node, goal_future, timeout_sec=2.0)
-        goal_handle = goal_future.result()
-        assert goal_handle is not None and goal_handle.accepted
-        result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(node, result_future, timeout_sec=5.0)
-        rejected_result = result_future.result()
-        assert rejected_result is not None
+        goal_handle = send_goal('reject')
+        assert goal_handle.accepted
+        rejected_result = _result(node, goal_handle.get_result_async(), timeout_sec=5.0)
         assert rejected_result.status == GoalStatus.STATUS_ABORTED
         assert (
             rejected_result.result.error_code
@@ -240,42 +233,24 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
         )
         assert 'target controller rejected the goal' in rejected_result.result.error_string
 
-        for goal_number, expected_status in enumerate(
-            (
-                GoalStatus.STATUS_CANCELED,
-                GoalStatus.STATUS_CANCELED,
-            ),
-            start=2,
-        ):
-            state.header.stamp = node.get_clock().now().to_msg()
-            state_publisher.publish(state)
-            goal_future = action_client.send_goal_async(action_goal)
-            rclpy.spin_until_future_complete(node, goal_future, timeout_sec=2.0)
-            goal_handle = goal_future.result()
-            assert goal_handle is not None and goal_handle.accepted
-            if goal_number == 2:
-                assert second_goal_started.wait(timeout=2.0)
+        for behavior in ('cancel', 'unconfirmed_cancel'):
+            goal_handle = send_goal(behavior)
+            assert goal_handle.accepted
+            assert target_started.wait(timeout=2.0)
+            if behavior == 'cancel':
                 output_count = len(outputs)
                 command_publisher.publish(command)
                 _spin_for(node, 0.15)
                 assert len(outputs) == output_count
-            if goal_number == 3:
-                assert third_goal_started.wait(timeout=2.0)
-            cancel_future = goal_handle.cancel_goal_async()
-            rclpy.spin_until_future_complete(node, cancel_future, timeout_sec=2.0)
-            assert len(cancel_future.result().goals_canceling) == 1
-            result_future = goal_handle.get_result_async()
-            rclpy.spin_until_future_complete(node, result_future, timeout_sec=5.0)
-            assert result_future.result().status == expected_status
+            canceled = _result(node, goal_handle.cancel_goal_async())
+            assert len(canceled.goals_canceling) == 1
+            result = _result(node, goal_handle.get_result_async(), timeout_sec=5.0)
+            assert result.status == GoalStatus.STATUS_CANCELED
 
-        assert 'did not confirm a terminal state' in result_future.result().result.error_string
-        state.header.stamp = node.get_clock().now().to_msg()
-        state_publisher.publish(state)
-        rejected_future = action_client.send_goal_async(action_goal)
-        rclpy.spin_until_future_complete(node, rejected_future, timeout_sec=2.0)
-        assert rejected_future.result() is not None
-        assert not rejected_future.result().accepted
+        assert 'did not confirm a terminal state' in result.result.error_string
+        assert not send_goal('succeed').accepted
     finally:
+        release_target.set()
         target_executor.shutdown(timeout_sec=5.0)
         target_spin.join(timeout=1.0)
         target_server.destroy()
@@ -297,7 +272,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
         [0.8, 0.4],
         [1.0, 1.0],
     ]
-    assert len(target_goals) == 3
+    assert target_goals[0].trajectory == trajectory
     assert len(feedback_messages) == 1
     feedback = feedback_messages[0].feedback
     assert feedback.joint_names == ['synergy']
