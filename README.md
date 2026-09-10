@@ -284,6 +284,19 @@ Report suspected security vulnerabilities according to
 [SECURITY.md](SECURITY.md),
 not through a public issue.
 
+## Citation
+
+If you use grasp_synergy_adapter in your research, please cite:
+
+```bibtex
+@software{kwon2026grasp_synergy_adapter,
+  author = {Kwon, Sunghyun},
+  title  = {{Grasp Synergy Adapter}: A {ROS 2} Interface for Synergy-Based Hand Control},
+  url    = {https://github.com/shkwon98/grasp_synergy_adapter},
+  year   = {2026}
+}
+```
+
 ## License
 
 Copyright 2026 Sunghyun Kwon.
