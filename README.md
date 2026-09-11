@@ -37,7 +37,8 @@ Supported platform: **ROS 2 Jazzy on Ubuntu 24.04**.
 CI also targets Humble (Ubuntu 22.04), Kilted (Ubuntu 24.04), and Lyrical
 (Ubuntu 26.04), with Rolling on Ubuntu 26.04 for forward compatibility.
 Each distribution is checked on amd64 and arm64 using the same `main` branch.
-Support for the additional distributions is pending successful CI validation;
+Local amd64 builds, unit and integration tests, and lint checks pass on all
+five distributions. GitHub CI confirmation, including arm64, is pending.
 CI coverage does not imply that binary packages have been released.
 
 Binary packages are not yet published. Build from source:

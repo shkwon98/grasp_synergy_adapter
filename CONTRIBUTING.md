@@ -10,6 +10,10 @@ and Lyrical and Rolling on Ubuntu 26.04, on both amd64 and arm64.
 Rolling checks forward compatibility; it is not a stable release target.
 Use the same `main` branch for all distributions.
 
+Keep C++20 usage compatible with Humble's GCC 11 and libstdc++, and keep CMake
+commands compatible with its CMake 3.22. Newer environments must also pass:
+Lyrical and Rolling use CMake 4. Prefer CMake imported targets for dependencies.
+
 For example, with ROS 2 Jazzy on Ubuntu 24.04, from the workspace root:
 
 ```bash
