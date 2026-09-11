@@ -53,6 +53,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
     suffix = str(os.getpid())
     namespace = f'/grasp_adapter_test_{suffix}'
     target = f'/grasp_adapter_target_{suffix}'
+    action_name = f'{namespace}/remapped_follow_joint_trajectory'
     executable = (
         Path(get_package_prefix('grasp_synergy_adapter'))
         / 'lib'
@@ -78,6 +79,8 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
             f'target/controller_state:={target}/controller_state',
             '-r',
             f'target/follow_joint_trajectory:={target}/follow_joint_trajectory',
+            '-r',
+            f'pinch_controller/follow_joint_trajectory:={action_name}',
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -103,7 +106,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
     action_client = ActionClient(
         node,
         FollowJointTrajectory,
-        f'{namespace}/pinch_controller/follow_joint_trajectory',
+        action_name,
     )
     target_goals = []
     feedback_messages = []
