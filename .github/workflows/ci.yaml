@@ -1,4 +1,4 @@
-name: Jazzy CI
+name: ROS 2 CI
 
 on:
   pull_request:
@@ -17,25 +17,36 @@ permissions:
 
 jobs:
   build_and_test:
-    name: Build and test (${{ matrix.architecture }})
-    runs-on: ${{ matrix.runner }}
+    name: Build and test (${{ matrix.ros.distro }}, ${{ matrix.platform.architecture }})
+    runs-on: ${{ matrix.platform.runner }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        include:
+        ros:
+          - distro: humble
+            ubuntu: jammy
+          - distro: jazzy
+            ubuntu: noble
+          - distro: kilted
+            ubuntu: noble
+          - distro: lyrical
+            ubuntu: resolute
+          - distro: rolling
+            ubuntu: resolute
+        platform:
           - architecture: amd64
             runner: ubuntu-24.04
           - architecture: arm64
             runner: ubuntu-24.04-arm
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-latest
+      image: rostooling/setup-ros-docker:ubuntu-${{ matrix.ros.ubuntu }}-latest
     steps:
       - name: Build and test
         uses: ros-tooling/action-ros-ci@v0.4
         with:
           package-name: grasp_synergy_adapter
-          target-ros2-distro: jazzy
+          target-ros2-distro: ${{ matrix.ros.distro }}
           no-symlink-install: true
           coverage-result: false
 

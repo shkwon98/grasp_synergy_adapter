@@ -34,6 +34,12 @@ hardware interface. Run one instance per physical hand or downstream controller.
 
 Supported platform: **ROS 2 Jazzy on Ubuntu 24.04**.
 
+CI also targets Humble (Ubuntu 22.04), Kilted (Ubuntu 24.04), and Lyrical
+(Ubuntu 26.04), with Rolling on Ubuntu 26.04 for forward compatibility.
+Each distribution is checked on amd64 and arm64 using the same `main` branch.
+Support for the additional distributions is pending successful CI validation;
+CI coverage does not imply that binary packages have been released.
+
 Binary packages are not yet published. Build from source:
 
 ```bash
@@ -47,6 +53,9 @@ rosdep install --from-paths src --ignore-src -r -y
 colcon build --packages-select grasp_synergy_adapter
 source install/setup.bash
 ```
+
+For another distribution, replace `jazzy` in the setup command with its name
+and use the corresponding Ubuntu version listed above.
 
 ## Quick start
 
