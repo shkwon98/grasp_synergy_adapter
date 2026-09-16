@@ -20,6 +20,7 @@
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <control_msgs/msg/joint_trajectory_controller_state.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/version.h>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 
@@ -53,8 +54,8 @@ public:
 
         trajectory_publisher_ = create_publisher<trajectory_msgs::msg::JointTrajectory>(
             "target/joint_trajectory", rclcpp::QoS{1}.reliable());
-        controller_client_ =
-            rclcpp_action::create_client<TrajectoryAction>(this, "target/follow_joint_trajectory");
+        controller_client_ = rclcpp_action::create_client<TrajectoryAction>(
+            this, ResolveActionName("target/follow_joint_trajectory"));
         state_subscription_ = create_subscription<ControllerState>(
             "target/controller_state", rclcpp::QoS{1}.reliable(),
             [this](ControllerState::SharedPtr message)
@@ -170,6 +171,16 @@ private:
         }
     }
 
+    std::string ResolveActionName(const std::string &name)
+    {
+#if RCLCPP_VERSION_MAJOR < 28
+        // Before Jazzy, action base names are not remapped by rcl_action.
+        return get_node_base_interface()->resolve_topic_or_service_name(name, false);
+#else
+        return name;
+#endif
+    }
+
     GraspEndpoint CreateEndpoint(const std::string &grasp)
     {
         const auto controller = ControllerName(grasp);
@@ -179,7 +190,7 @@ private:
             [this, grasp](trajectory_msgs::msg::JointTrajectory::SharedPtr message)
             { HandleTrajectory(grasp, *message); });
         endpoint.action_server = rclcpp_action::create_server<TrajectoryAction>(
-            this, controller + "/follow_joint_trajectory",
+            this, ResolveActionName(controller + "/follow_joint_trajectory"),
             [this, grasp](const rclcpp_action::GoalUUID &uuid,
                           const std::shared_ptr<const TrajectoryAction::Goal> goal)
             { return HandleGoal(grasp, uuid, goal); },
@@ -228,8 +239,7 @@ private:
             return std::nullopt;
         }
         const double age =
-            (get_clock()->now() - rclcpp::Time(state->header.stamp, get_clock()->get_clock_type()))
-                .seconds();
+            (now() - rclcpp::Time(state->header.stamp, get_clock()->get_clock_type())).seconds();
         if (age < 0.0 || age > state_timeout_sec_)
         {
             return std::nullopt;
