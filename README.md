@@ -61,11 +61,9 @@ positions with values appropriate for your hand:
     synergy_joint: synergy
     joints: [finger_a_joint, finger_b_joint]
     state_timeout_sec: 0.5
-    grasp_names: [pinch]
 
     grasps:
       pinch:
-        knot_names: [pre_grasp, intermediate, grasp]
         knots:
           pre_grasp:
             coordinate: 0.0
@@ -82,9 +80,9 @@ Each `positions` array follows the order of `joints`. Use radians for revolute
 joints and metres for prismatic joints. Adjacent knots must describe different
 physical poses.
 
-To configure additional grasps, add their names to `grasp_names` and provide
-matching blocks under `grasps`. Each profile gets its own topic and action
-endpoints at startup.
+To configure additional grasps, add named blocks under `grasps`. All profiles
+are discovered at startup, each with its own topic and action endpoints. Knots
+are sorted by `coordinate`, independently of their names or YAML order.
 
 See [config/example.yaml](config/example.yaml) for the annotated schema.
 
@@ -134,7 +132,7 @@ The endpoint selects the grasp profile. When switching profiles, first command
 
 ## Interfaces
 
-Each entry in `grasp_names` creates two relative client endpoints:
+Each profile under `grasps` creates two relative client endpoints:
 
 | Endpoint | Type | Direction |
 | --- | --- | --- |
@@ -163,11 +161,10 @@ Trajectory and state topics use reliable QoS with depth 1. Remap all three
 | `synergy_joint` | string | Required, nonempty; must not duplicate a physical joint name |
 | `joints` | string array | Required, nonempty, unique physical joint names |
 | `state_timeout_sec` | double | Required, finite, greater than zero; seconds |
-| `grasp_names` | string array | Required, nonempty, unique grasp names |
-| `knot_names` (per grasp) | string array | At least two, ordered, unique knot names |
-| `coordinate` (per knot) | double | Finite, strictly increasing from `0.0` to `1.0` |
+| `coordinate` (per knot) | double | Finite, unique within the profile; minimum `0.0`, maximum `1.0` |
 | `positions` (per knot) | double array | One finite value per physical joint; radians or metres |
 
+At least one grasp profile is required, with at least two knots per profile.
 Grasp and knot names must be valid ROS name tokens.
 
 ## Command behavior

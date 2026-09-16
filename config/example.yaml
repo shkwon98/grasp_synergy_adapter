@@ -25,17 +25,15 @@
 
     # ── Grasp profiles ───────────────────────────────────────────────
     # Each name creates one <grasp>_controller topic and action endpoint.
-    # To add a grasp, append its name here and copy the nested pinch block below.
-    grasp_names: [pinch]
+    # To add a grasp, add a named block under grasps below.
 
     # Each entry below grasps has:
-    #   knot_names  Ordered knot names.
     #   knots       Named knot definitions, each containing:
     #     coordinate  [double, normalized]
     #     positions   [list[double], joint position]
     #
-    #   • Provide at least two knots in knot_names order.
-    #   • Coordinates must be finite and strictly increase from 0.0 to 1.0.
+    #   • Provide at least two knots; they are sorted by coordinate.
+    #   • Coordinates must be finite and unique, spanning 0.0 to 1.0.
     #   • Positions must be finite. Use rad for revolute and m for prismatic joints.
     #   • Adjacent knots must not have identical positions.
     #
@@ -43,7 +41,6 @@
     # are included in the output, starting from the current projected hand state.
     grasps:
       pinch:
-        knot_names: [pre_grasp, intermediate, grasp]
         knots:
           pre_grasp:
             coordinate: 0.0

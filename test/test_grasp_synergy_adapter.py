@@ -48,7 +48,7 @@ def test_missing_required_parameters_exit_with_error():
     assert 'not initialized' in result.stdout + result.stderr
 
 
-def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
+def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp(tmp_path):
     # ponytail: share one ROS process; split if scenarios need independent execution.
     suffix = str(os.getpid())
     namespace = f'/grasp_adapter_test_{suffix}'
@@ -64,6 +64,13 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
         / 'config'
         / 'example.yaml'
     )
+    # Discover both profiles; lexical knot order differs from coordinate order.
+    config_text = config.read_text()
+    assert 'grasp_names:' not in config_text
+    assert 'knot_names:' not in config_text
+    second_profile = config_text[config_text.index('      pinch:'):]
+    config = tmp_path / 'profiles.yaml'
+    config.write_text(config_text + second_profile.replace('      pinch:', '      wrap:', 1))
     process = subprocess.Popen(
         [
             str(executable),
@@ -104,6 +111,10 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
         node,
         FollowJointTrajectory,
         f'{namespace}/pinch_controller/follow_joint_trajectory',
+    )
+    second_client = ActionClient(
+        node, FollowJointTrajectory,
+        f'{namespace}/wrap_controller/follow_joint_trajectory',
     )
     target_goals = []
     feedback_messages = []
@@ -154,6 +165,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
 
     try:
         assert action_client.wait_for_server(timeout_sec=2.0)
+        assert second_client.wait_for_server(timeout_sec=2.0)
         deadline = time.monotonic() + 2.0
         while (
             command_publisher.get_subscription_count() == 0
@@ -255,6 +267,7 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
         target_spin.join(timeout=1.0)
         target_server.destroy()
         target_node.destroy_node()
+        second_client.destroy()
         action_client.destroy()
         node.destroy_subscription(output_subscription)
         node.destroy_publisher(command_publisher)
@@ -279,3 +292,26 @@ def test_packaged_profile_exposes_and_remaps_a_piecewise_grasp():
     assert list(feedback.desired.positions) == pytest.approx([0.5])
     assert list(feedback.actual.positions) == pytest.approx([0.2])
     assert list(feedback.error.positions) == pytest.approx([0.3])
+
+
+@pytest.mark.parametrize(('coordinate', 'error'), [
+    ('1.0', 'knots must progress'),
+    ('.nan', 'coordinate must be finite'),
+])
+def test_discovered_knots_reject_invalid_coordinates(tmp_path, coordinate, error):
+    executable = (
+        Path(get_package_prefix('grasp_synergy_adapter'))
+        / 'lib' / 'grasp_synergy_adapter' / 'grasp_synergy_adapter'
+    )
+    example = (
+        Path(get_package_share_directory('grasp_synergy_adapter'))
+        / 'config' / 'example.yaml'
+    )
+    config = tmp_path / 'invalid.yaml'
+    config.write_text(example.read_text().replace('coordinate: 0.5', f'coordinate: {coordinate}'))
+    result = subprocess.run(
+        [str(executable), '--ros-args', '--params-file', str(config)],
+        capture_output=True, text=True, timeout=5, check=False,
+    )
+    assert result.returncode != 0
+    assert error in result.stdout + result.stderr

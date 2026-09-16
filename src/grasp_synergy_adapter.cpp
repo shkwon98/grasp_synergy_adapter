@@ -9,6 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -111,35 +112,47 @@ private:
         return value;
     }
 
+    std::set<std::string> ParameterChildren(const std::string &prefix)
+    {
+        std::set<std::string> names;
+        const auto stem = prefix + ".";
+        for (const auto &[parameter, value] :
+             get_node_parameters_interface()->get_parameter_overrides())
+        {
+            if (parameter.starts_with(stem))
+            {
+                const auto suffix = parameter.substr(stem.size());
+                names.insert(suffix.substr(0, suffix.find('.')));
+            }
+        }
+        return names;
+    }
+
     GraspModel LoadGrasps()
     {
-        const auto names = RequiredStringArray("grasp_names");
         GraspMap grasps;
-        for (const auto &name : names)
+        for (const auto &name : ParameterChildren("grasps"))
         {
             static_cast<void>(ControllerName(name));
-            const auto knot_names = RequiredStringArray("grasps." + name + ".knot_names");
-            std::unordered_set<std::string> unique_knots;
+            const auto knots_prefix = "grasps." + name + ".knots";
             GraspProfile profile;
-            profile.knots.reserve(knot_names.size());
-            for (const auto &knot_name : knot_names)
+            for (const auto &knot_name : ParameterChildren(knots_prefix))
             {
-                if (!unique_knots.insert(knot_name).second)
-                {
-                    throw std::invalid_argument("grasp '" + name + "' has duplicate knot names");
-                }
                 static_cast<void>(ControllerName(knot_name));
-                const auto prefix = "grasps." + name + ".knots." + knot_name;
+                const auto prefix = knots_prefix + "." + knot_name;
                 declare_parameter(prefix + ".coordinate", rclcpp::ParameterType::PARAMETER_DOUBLE);
                 declare_parameter(prefix + ".positions",
                                   rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
-                profile.knots.push_back({get_parameter(prefix + ".coordinate").as_double(),
-                                         get_parameter(prefix + ".positions").as_double_array()});
+                const double coordinate = get_parameter(prefix + ".coordinate").as_double();
+                if (!std::isfinite(coordinate))
+                {
+                    throw std::invalid_argument(prefix + ".coordinate must be finite");
+                }
+                profile.knots.push_back(
+                    {coordinate, get_parameter(prefix + ".positions").as_double_array()});
             }
-            if (!grasps.emplace(name, std::move(profile)).second)
-            {
-                throw std::invalid_argument("grasp name '" + name + "' is duplicated");
-            }
+            std::ranges::sort(profile.knots, {}, &GraspKnot::coordinate);
+            grasps.emplace(name, std::move(profile));
         }
         return GraspModel{std::move(grasps)};
     }
