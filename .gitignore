@@ -1,11 +1,423 @@
 # SPDX-FileCopyrightText: 2026 Sunghyun Kwon
 # SPDX-License-Identifier: Apache-2.0
 
-/build/
-/install/
-/log/
+# ============================================================
+# Common
+# ============================================================
 
+# Secrets and local configuration
+*.pem
+*.jks
+.env
+.env.test
+local.properties
+google-services.json
+
+# Logs and runtime data
+*.log
+log/
+logs
+pids
+*.pid
+*.pid.lock
+*.seed
+
+# Common build and package outputs
+build/
+dist
+install/
+target/
+bin/
+gen/
+out/
+
+# Caches
+.cache
+.npm
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+.tox/
+
+# Local artifacts
+bak/
+superpowers/
+
+# ============================================================
+# Operating systems
+# ============================================================
+
+# macOS
+.DS_Store
+
+# Windows
+.thumbs.db
+
+
+# ============================================================
+# Editors and IDEs
+# ============================================================
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains: CLion, IntelliJ, PyCharm, Android Studio
+.idea/
+*.iml
+
+# Visual Studio
+*.suo
+*.ntvs*
+
+# Vim
+*.swp
+
+# Emacs
+.#*
+
+# Qt Creator
+*.autosave
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.qmlproject.user
+*.qmlproject.user.*
+CMakeLists.txt.user*
+
+
+# ============================================================
+# C and C++
+# ============================================================
+
+# Dependencies and objects
+*.d
+*.dpp
+*.o
+*.ko
+*.obj
+*.elf
+*.slo
+*.smod
+
+# Linker output and libraries
+*.ilk
+*.map
+*.exp
+*.lib
+*.a
+*.la
+*.lo
+*.lai
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Shared libraries
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug information
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel module output
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+
+# ============================================================
+# Python
+# ============================================================
+
+# Bytecode
 __pycache__/
 *.py[cod]
-.pytest_cache/
+*$py.class
+
+# Packaging
+.Python
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer output
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Tests and coverage
+htmlcov/
 .coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+
+# Translations
+*.mo
+*.pot
+
+# Django
+local_settings.py
+db.sqlite3
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Documentation
+docs/_build/
+/site
+
+# Jupyter
+.ipynb_checkpoints
+
+# Python environments and tools
+.python-version
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Celery and SageMath
+celerybeat-schedule
+*.sage.py
+
+
+# ============================================================
+# Java
+# ============================================================
+
+*.class
+*.ctxt
+.mtj.tmp/
+
+# Packages
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# JVM crash logs
+hs_err_pid*
+
+
+# ============================================================
+# Android
+# ============================================================
+
+# Application and VM output
+*.apk
+*.ap_
+*.dex
+
+# Gradle and generated files
+.gradle/
+proguard/
+.navigation/
+captures/
+
+# Native build
+.externalNativeBuild
+
+# Freeline
+freeline.py
+freeline/
+freeline_project_description.json
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
+
+
+# ============================================================
+# CUDA
+# ============================================================
+
+*.i
+*.ii
+*.gpu
+*.ptx
+*.cubin
+*.fatbin
+
+
+# ============================================================
+# CMake
+# ============================================================
+
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+
+# ============================================================
+# Qt
+# ============================================================
+
+# Generated files
+object_script.*.Release
+object_script.*.Debug
+*_plugin_import.cpp
+/.qmake.cache
+/.qmake.stash
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*build-*
+
+# Test output
+target_wrapper.*
+
+
+# ============================================================
+# Node.js
+# ============================================================
+
+# Logs and diagnostic reports
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Coverage and instrumentation
+lib-cov
+coverage
+*.lcov
+.nyc_output
+
+# Dependencies
+node_modules
+jspm_packages/
+bower_components
+
+# Build tools
+.grunt
+.lock-wscript
+typings/
+*.tsbuildinfo
+.eslintcache
+
+# Microbundle
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Runtime and package output
+.node_repl_history
+*.tgz
+.yarn-integrity
+
+# Framework output
+.next
+.nuxt
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+
+# Yarn
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+.pnp.*
+
+
+# ============================================================
+# Quasar
+# ============================================================
+
+.quasar
+
+# Cordova
+/src-cordova/platforms
+/src-cordova/plugins
+/src-cordova/www
+
+# Capacitor
+/src-capacitor/www
+
+# Browser extension
+/src-bex/www
+/src-bex/js/core
+
+
+# ============================================================
+# ROS
+# ============================================================
+
+CATKIN_IGNORE
+AMENT_IGNORE
+COLCON_IGNORE
+
+
+# ============================================================
+# Documentation and middleware
+# ============================================================
+
+# Generated documentation
+*.dox
+*.wikidoc
+doc/
+
+# GurumDDS
+*.ar
