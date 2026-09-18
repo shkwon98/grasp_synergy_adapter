@@ -2,8 +2,8 @@
 Changelog for package grasp_synergy_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2026-09-18)
+------------------
 * Discover grasp and knot names from profile parameters and sort knots by coordinate.
   Migration: remove ``grasp_names`` and ``knot_names`` from existing YAML files;
   all profiles under ``grasps`` are now loaded.
